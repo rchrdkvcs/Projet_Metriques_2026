@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-stone-50 text-stone-900 font-sans flex items-center justify-center px-6 py-12 antialiased">
+
+  <!-- Barre de progression -->
+  <div id="progress" class="fixed top-0 left-0 h-[3px] bg-stone-900 transition-all duration-500 ease-out z-50" style="width: 25%"></div>
+
+  <!-- Header -->
+  <div class="fixed top-6 left-6 text-sm font-medium text-stone-600">Contact</div>
+  <div class="fixed top-6 right-6 text-sm text-stone-500">
+    <span id="step-counter">1</span> / 4
+  </div>
+
+  <!-- Formulaire -->
+  <main class="w-full max-w-2xl">
+    <form id="contact-form" onsubmit="return false;">
+
+      <!-- Étape 1 : Prénom -->
+      <div data-step="1" class="step">
+        <div class="text-xs font-medium text-stone-500 mb-4 flex items-center gap-1.5">
+          <span>1</span>
+          <span>→</span>
+        </div>
+        <label for="prenom" class="block text-2xl font-medium text-stone-900 mb-2 leading-snug">
+          Comment vous appelez-vous ?
+        </label>
+        <p class="text-stone-500 mb-8">Votre prénom suffira pour commencer.</p>
+        <input
+          type="text"
+          id="prenom"
+          placeholder="Prénom"
+          autocomplete="given-name"
+          autofocus
+          class="w-full bg-transparent border-0 border-b-2 border-stone-300 focus:border-stone-900 outline-none py-3 text-3xl font-light placeholder:text-stone-400 placeholder:font-light transition-colors"
+        >
+        <div class="mt-8 flex items-center">
+          <button type="button" onclick="next()" class="bg-stone-900 hover:bg-black text-stone-50 px-7 py-3.5 rounded-md font-medium text-sm inline-flex items-center gap-2 hover:-translate-y-0.5 transition-all">
+            OK
+            <span>✓</span>
+          </button>
+          <span class="ml-3 text-xs text-stone-400">
+            appuyez sur <kbd class="bg-stone-200 px-1.5 py-0.5 rounded text-[11px]">Entrée</kbd>
+          </span>
+        </div>
+      </div>
+
+      <!-- Étape 2 : Nom -->
+      <div data-step="2" class="step hidden">
+        <div class="text-xs font-medium text-stone-500 mb-4 flex items-center gap-1.5">
+          <span>2</span>
+          <span>→</span>
+        </div>
+        <label for="nom" class="block text-2xl font-medium text-stone-900 mb-2 leading-snug">
+          Et votre nom ?
+        </label>
+        <p class="text-stone-500 mb-8">Histoire de bien vous identifier.</p>
+        <input
+          type="text"
+          id="nom"
+          placeholder="Nom"
+          autocomplete="family-name"
+          class="w-full bg-transparent border-0 border-b-2 border-stone-300 focus:border-stone-900 outline-none py-3 text-3xl font-light placeholder:text-stone-400 placeholder:font-light transition-colors"
+        >
+        <div class="mt-8 flex items-center gap-3">
+          <button type="button" onclick="prev()" class="text-stone-600 hover:text-stone-900 text-sm px-4 py-2.5 transition-colors">
+            ← Retour
+          </button>
+          <button type="button" onclick="next()" class="bg-stone-900 hover:bg-black text-stone-50 px-7 py-3.5 rounded-md font-medium text-sm inline-flex items-center gap-2 hover:-translate-y-0.5 transition-all">
+            OK
+            <span>✓</span>
+          </button>
+          <span class="text-xs text-stone-400">
+            appuyez sur <kbd class="bg-stone-200 px-1.5 py-0.5 rounded text-[11px]">Entrée</kbd>
+          </span>
+        </div>
+      </div>
+
+      <!-- Étape 3 : Message -->
+      <div data-step="3" class="step hidden">
+        <div class="text-xs font-medium text-stone-500 mb-4 flex items-center gap-1.5">
+          <span>3</span>
+          <span>→</span>
+        </div>
+        <label for="message" class="block text-2xl font-medium text-stone-900 mb-2 leading-snug">
+          Quel est votre message ?
+        </label>
+        <p class="text-stone-500 mb-8">Dites-moi ce qui vous amène.</p>
+        <textarea
+          id="message"
+          rows="4"
+          placeholder="Tapez votre message ici…"
+          class="w-full bg-transparent border-0 border-b-2 border-stone-300 focus:border-stone-900 outline-none py-3 text-xl font-light leading-relaxed placeholder:text-stone-400 placeholder:font-light resize-none transition-colors"
+        ></textarea>
+        <div class="mt-8 flex items-center gap-3">
+          <button type="button" onclick="prev()" class="text-stone-600 hover:text-stone-900 text-sm px-4 py-2.5 transition-colors">
+            ← Retour
+          </button>
+          <button type="button" onclick="submit()" class="bg-stone-900 hover:bg-black text-stone-50 px-7 py-3.5 rounded-md font-medium text-sm inline-flex items-center gap-2 hover:-translate-y-0.5 transition-all">
+            Envoyer
+            <span>→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Étape 4 : Confirmation -->
+      <div data-step="4" class="step hidden">
+        <div class="text-5xl mb-6">✓</div>
+        <h2 class="text-3xl font-medium mb-3">
+          Merci <span id="confirm-name" class="text-stone-500">!</span>
+        </h2>
+        <p class="text-stone-600 text-lg">Votre message a bien été pris en compte.</p>
+        <button type="button" onclick="reset()" class="mt-8 text-stone-600 hover:text-stone-900 text-sm transition-colors">
+          ← Envoyer un autre message
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function showStep(n) {
+      document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
+      const step = document.querySelector(`[data-step="${n}"]`);
+      step.classList.remove('hidden');
+      currentStep = n;
+
+      document.getElementById('progress').style.width = (n / totalSteps * 100) + '%';
+      document.getElementById('step-counter').textContent = n;
+
+      const input = step.querySelector('input, textarea');
+      if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function next() {
+      const step = document.querySelector(`[data-step="${currentStep}"]`);
+      const input = step.querySelector('input, textarea');
+      if (input && !input.value.trim()) {
+        input.classList.remove('border-stone-300');
+        input.classList.add('border-red-500');
+        input.focus();
+        setTimeout(() => {
+          input.classList.remove('border-red-500');
+          input.classList.add('border-stone-300');
+        }, 1500);
+        return;
+      }
+      if (currentStep < totalSteps) showStep(currentStep + 1);
+    }
+
+    function prev() {
+      if (currentStep > 1) showStep(currentStep - 1);
+    }
+
+    function submit() {
+      const message = document.getElementById('message').value.trim();
+      if (!message) {
+        const el = document.getElementById('message');
+        el.classList.remove('border-stone-300');
+        el.classList.add('border-red-500');
+        el.focus();
+        setTimeout(() => {
+          el.classList.remove('border-red-500');
+          el.classList.add('border-stone-300');
+        }, 1500);
+        return;
+      }
+      document.getElementById('confirm-name').textContent = document.getElementById('prenom').value + ' !';
+      showStep(4);
+    }
+
+    function reset() {
+      document.getElementById('contact-form').reset();
+      showStep(1);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && currentStep < 3) {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'Enter' && e.ctrlKey && currentStep === 3) {
+        e.preventDefault();
+        submit();
+      }
+    });
+  </script>
+</body>
+</html>
