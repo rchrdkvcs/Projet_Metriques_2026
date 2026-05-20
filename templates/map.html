@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Température moyenne par région — France</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body class="min-h-screen bg-stone-50 font-sans antialiased">
+
+  <div class="max-w-5xl mx-auto px-6 py-12">
+    <div class="mb-8">
+      <h1 class="text-3xl font-semibold text-stone-900 mb-1">Température moyenne par région</h1>
+      <p class="text-stone-500 text-sm">Données du jour — Open-Meteo via
+        <code class="bg-stone-200 px-1.5 py-0.5 rounded text-xs">/regions-temperature</code>
+      </p>
+    </div>
+
+    <div id="map" class="w-full rounded-xl overflow-hidden border border-stone-200" style="height: 520px; z-index: 0;"></div>
+
+    <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3" id="legend"></div>
+
+    <p id="status" class="mt-6 text-sm text-stone-400"></p>
+  </div>
+
+<script>
+const GEOJSON_URL = 'https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions-version-simplifiee.geojson';
+
+const map = L.map('map', {
+  zoomControl: false,
+  attributionControl: false,
+  dragging: false,
+  scrollWheelZoom: false,
+  doubleClickZoom: false,
+  touchZoom: false,
+}).setView([46.6, 2.5], 6);
+
+// Fond blanc, pas de tuiles
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+
+async function init() {
+  try {
+    const [geoRes, tempRes] = await Promise.all([
+      fetch(GEOJSON_URL),
+      fetch('/regions-temperature', { headers: { 'Accept': 'application/json' } }),
+    ]);
+
+    if (!geoRes.ok) throw new Error('GeoJSON : HTTP ' + geoRes.status);
+    if (!tempRes.ok) throw new Error('API : HTTP ' + tempRes.status);
+
+    const geojson = await geoRes.json();
+    const temperatures = await tempRes.json();
+
+    // Créer un index nom → température
+    const tempMap = {};
+    temperatures.forEach(r => { tempMap[r.region] = r.avg_temperature_c; });
+
+    // Dessiner les régions
+    L.geoJSON(geojson, {
+      style: feature => {
+        const name = feature.properties.nom;
+        const temp = tempMap[name];
+        return {
+          fillColor: temp != null ? tempToColor(temp) : '#d6d3d1',
+          fillOpacity: 0.8,
+          color: '#ffffff',
+          weight: 2,
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        const name = feature.properties.nom;
+        const temp = tempMap[name];
+        if (temp != null) {
+          layer.bindTooltip(
+            '<b>' + name + '</b><br>' + temp + ' °C',
+            { sticky: true, className: 'custom-tooltip' }
+          );
+        }
+      }
+    }).addTo(map);
+
+    drawLegend(temperatures);
+    document.getElementById('status').textContent = '✓ ' + temperatures.length + ' régions chargées';
+
+  } catch (err) {
+    document.getElementById('status').textContent = 'Erreur : ' + (err?.message || err);
+  }
+}
+
+function tempToColor(t) {
+  // Dégradé bleu → vert → jaune → orange → rouge
+  const stops = [
+    { val: 0,  r: 59,  g: 130, b: 246 },  // bleu
+    { val: 10, r: 34,  g: 197, b: 94  },   // vert
+    { val: 18, r: 250, g: 204, b: 21  },   // jaune
+    { val: 24, r: 249, g: 115, b: 22  },   // orange
+    { val: 35, r: 239, g: 68,  b: 68  },   // rouge
+  ];
+
+  if (t <= stops[0].val) return rgbStr(stops[0]);
+  if (t >= stops[stops.length - 1].val) return rgbStr(stops[stops.length - 1]);
+
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i].val && t <= stops[i + 1].val) {
+      const ratio = (t - stops[i].val) / (stops[i + 1].val - stops[i].val);
+      const r = Math.round(stops[i].r + ratio * (stops[i + 1].r - stops[i].r));
+      const g = Math.round(stops[i].g + ratio * (stops[i + 1].g - stops[i].g));
+      const b = Math.round(stops[i].b + ratio * (stops[i + 1].b - stops[i].b));
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+  }
+  return '#d6d3d1';
+}
+
+function rgbStr(s) { return 'rgb(' + s.r + ',' + s.g + ',' + s.b + ')'; }
+
+function drawLegend(regions) {
+  const sorted = [...regions]
+    .filter(r => r.avg_temperature_c != null)
+    .sort((a, b) => b.avg_temperature_c - a.avg_temperature_c);
+
+  const container = document.getElementById('legend');
+  container.innerHTML = '';
+
+  sorted.forEach(r => {
+    const temp = r.avg_temperature_c;
+    const el = document.createElement('div');
+    el.className = 'flex items-center justify-between bg-white border border-stone-200 rounded-lg px-3 py-2.5';
+    el.innerHTML =
+      '<span class="text-sm text-stone-700 truncate">' + r.region + '</span>' +
+      '<span class="ml-2 text-sm font-semibold shrink-0" style="color:' + tempToColor(temp) + '">' + temp + ' °C</span>';
+    container.appendChild(el);
+  });
+}
+
+init();
+</script>
+
+<style>
+  .custom-tooltip {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e7e5e4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+</style>
+
+</body>
+</html>
